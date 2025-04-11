@@ -1,0 +1,39 @@
+
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+.task-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background-color: transparent;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+@media (max-width: 768px) {
+    .header-column {
+        width: 100%;
+        height: auto;
+        position: relative;
+        flex-direction: row;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .header-content {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+    }
+    .profile-img {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+}
+
+
+.bonheur-royale-regular {
+    font-family: "Bonheur Royale", cursive;
+    font-weight: 400;
+    font-style: normal;
+  }
+  

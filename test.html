@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Personal Task Management Application">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>My Tasks | Task Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bonheur+Royale&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .panel-style {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        .panel-style::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .blur-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: -1;
+        }
+        .task-item {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 0;
+            transition: all 0.2s ease;
+        }
+        .task-item:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+        .restore-btn {
+            background-color: rgba(74, 222, 128, 0.2);
+            border: 1px solid rgba(74, 222, 128, 0.5);
+        }
+        .restore-btn:hover {
+            background-color: rgba(74, 222, 128, 0.4);
+        }
+        .task-priority-low {
+            border-left: 3px solid #3b82f6;
+        }
+        .task-priority-medium {
+            border-left: 3px solid #eab308;
+        }
+        .task-priority-high {
+            border-left: 3px solid #f97316;
+        }
+        .task-priority-urgent {
+            border-left: 3px solid #ef4444;
+        }
+        .dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+        .drop-zone {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-cover bg-center min-h-screen" style="background-image: url('Wallpaper.jpg');">
+    
+    <div class="blur-layer"></div>
+
+    <div class="relative z-10 flex flex-col lg:flex-row min-h-screen">
+        <header class="header-column bg-black bg-opacity-50 shadow-md p-4 lg:p-6 lg:w-48 xl:w-56 flex lg:block lg:h-screen lg:sticky lg:top-0">
+            <div class="header-content">
+                <img src="beard-man.png" alt="User Profile" 
+                     class="profile-img w-16 h-16 lg:w-24 lg:h-24 xl:w-32 xl:h-32 rounded-full border-2 lg:border-4 border-white shadow-lg object-cover mb-2 lg:mb-4 mx-auto">
+                <h1  class="text-white text-sm lg:text-xl font-bold text-center mt-2">
+                    Task Manager
+                </h1>
+                <div class="mt-4 text-center hidden lg:block">
+                    <p class="text-white/70 text-sm" id="taskSummary">0 tasks</p>
+                    <p class="text-white/50 text-xs mt-1" id="dateDisplay"></p>
+                </div>
+                <button id="clearAllBtn" class="mt-6 text-xs bg-red-500/20 text-red-400 px-3 py-1 rounded hover:bg-red-500/30 transition hidden lg:block">
+                    Clear All Tasks
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 p-4 sm:p-6">
+            <div class="flex flex-col items-center mb-6">
+                <h1 class="text-[70px] font-bold text-white" style="font-family: 'Bonheur Royale'";>Task Assistant</h1>
+                <div class="lg:hidden text-right">
+                    <p class="text-white/70 text-sm" id="mobileTaskSummary">0 tasks</p>
+                    <p class="text-white/50 text-xs" id="mobileDateDisplay"></p>
+                </div>
+            </div>
+
+            <div class="w-full max-w-3xl mx-auto mb-6 panel-style rounded-lg p-4 transition-all duration-300 hover:shadow-lg">
+                <form id="taskForm" class="flex flex-col space-y-3">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-tasks text-white/50"></i>
+                        <input id="taskInput" type="text" required
+                               class="panel-style p-2 rounded w-full"
+                               placeholder="Task title">
+                    </div>
+                    
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-align-left mt-3 text-white/50"></i>
+                        <textarea id="taskDetails"
+                                  class="panel-style p-2 rounded w-full min-h-[80px]"
+                                  placeholder="Task details"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-flag text-white/50"></i>
+                            <select id="taskPriority" class="panel-style p-2 rounded w-full">
+                                <option value="low">Low Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="high">High Priority</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-list-check text-white/50"></i>
+                            <select id="taskStatus" class="panel-style p-2 rounded w-full">
+                                <option value="to-do" selected>To Do</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" id="submit" class="panel-style hover:bg-white hover:text-black transition rounded py-2 flex items-center justify-center space-x-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Add Task</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="w-full max-w-3xl mx-auto mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-search text-white/50"></i>
+                        <input id="taskSearch" type="text" 
+                               class="panel-style p-2 rounded w-full"
+                               placeholder="Search...">
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-filter text-white/50"></i>
+                        <select id="taskFilter" class="panel-style p-2 rounded w-full">
+                            <option value="all">All Tasks</option>
+                            <option value="to-do">To Do</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="deleted">Deleted</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-flag text-white/50"></i>
+                        <select id="priorityFilter" class="panel-style p-2 rounded w-full">
+                            <option value="all">All Priorities</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-list-check text-white/50"></i>
+                        <select id="statusFilter" class="panel-style p-2 rounded w-full">
+                            <option value="all">All Statuses</option>
+                            <option value="to-do">To Do</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="panel-style rounded-lg p-4 transition-all duration-300 hover:shadow-lg">
+                    <div class="flex justify-between items-center mb-3 border-b border-white/20 pb-2">
+                        <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fas fa-circle text-blue-400 text-xs"></i>
+                            <span>To Do</span>
+                        </h3>
+                        <span class="task-count text-sm font-normal bg-white/10 px-2 py-1 rounded" data-type="to-do">0</span>
+                    </div>
+                    <ul id="toDoTasks" class="space-y-3 min-h-[200px] task-list" data-status="to-do">
+                        <li class="text-white/50 text-center py-4">No tasks</li>
+                    </ul>
+                </div>
+                
+                <div class="panel-style rounded-lg p-4 transition-all duration-300 hover:shadow-lg">
+                    <div class="flex justify-between items-center mb-3 border-b border-white/20 pb-2">
+                        <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fas fa-circle text-yellow-400 text-xs"></i>
+                            <span>In Progress</span>
+                        </h3>
+                        <span class="task-count text-sm font-normal bg-white/10 px-2 py-1 rounded" data-type="in-progress">0</span>
+                    </div>
+                    <ul id="inProgressTasks" class="space-y-3 min-h-[200px] task-list" data-status="in-progress">
+                        <li class="text-white/50 text-center py-4">No tasks</li>
+                    </ul>
+                </div>
+                
+                <div class="panel-style rounded-lg p-4 transition-all duration-300 hover:shadow-lg">
+                    <div class="flex justify-between items-center mb-3 border-b border-white/20 pb-2">
+                        <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fas fa-circle text-green-400 text-xs"></i>
+                            <span>Completed</span>
+                        </h3>
+                        <span class="task-count text-sm font-normal bg-white/10 px-2 py-1 rounded" data-type="completed">0</span>
+                    </div>
+                    <ul id="completedTasks" class="space-y-3 min-h-[200px] task-list" data-status="completed">
+                        <li class="text-white/50 text-center py-4">No tasks</li>
+                    </ul>
+                </div>
+                
+                <div class="panel-style rounded-lg p-4 transition-all duration-300 hover:shadow-lg">
+                    <div class="flex justify-between items-center mb-3 border-b border-white/20 pb-2">
+                        <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fas fa-circle text-red-400 text-xs"></i>
+                            <span>Deleted</span>
+                        </h3>
+                        <span class="task-count text-sm font-normal bg-white/10 px-2 py-1 rounded" data-type="deleted">0</span>
+                    </div>
+                    <ul id="deletedTasks" class="space-y-3 min-h-[200px]">
+                        <li class="text-white/50 text-center py-4">No tasks</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="./script.js">
+    </script>
+</body>
+</html>
